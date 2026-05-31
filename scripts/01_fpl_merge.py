@@ -36,9 +36,7 @@ pd.set_option('display.max_columns', None)
 
 
 # Fuzzy matching
-from thefuzz import fuzz, process
-
-import os
+from thefuzz import fuzz
 
 # Base URL for the vaastav Fantasy-Premier-League archive
 VAASTAV = "https://raw.githubusercontent.com/vaastav/Fantasy-Premier-League/master/data"
@@ -142,7 +140,6 @@ fpl20_24['name'] = fpl20_24['name'].str.replace('-', ' ', regex=False)
 
 # Unique name list
 unique_names = fpl20_24['name'].dropna().unique().tolist()
-len(unique_names)
 
 # Empty dictionary
 name_map = {}
@@ -174,27 +171,12 @@ fpl20_24 = fpl20_24.assign(
 fpl20_24 = fpl20_24.drop(columns = ['name'])
 
 # %%
-# empty mapping list
-name_matches = []
-
-# Loop through all unique pairs
-for i, name in enumerate(unique_names):
-    for fuzzy_name in unique_names[i+1:]:
-        score = fuzz.token_set_ratio(name, fuzzy_name)
-        if score >= 93:  # similarity threshold
-            name_matches.append((name, fuzzy_name, score))
-
-# Convert to DataFrame
-name_matches_df = pd.DataFrame(name_matches, columns=["name1", "name2", "similarity"])
-
-# %%
 cols = ['first_name', 'second_name', 'id', 'web_name']
-web_names21 = pd.read_csv(f'{VAASTAV}/2020-21/players_raw.csv', usecols=cols)
-web_names22 = pd.read_csv(f'{VAASTAV}/2021-22/players_raw.csv', usecols=cols)
-web_names23 = pd.read_csv(f'{VAASTAV}/2022-23/players_raw.csv', usecols=cols)
-web_names24 = pd.read_csv(f'{VAASTAV}/2023-24/players_raw.csv', usecols=cols)
-
-web_names = pd.concat([web_names21, web_names22, web_names23, web_names24], ignore_index=True)
+web_name_seasons = ["2020-21", "2021-22", "2022-23", "2023-24"]
+web_names = pd.concat(
+    [pd.read_csv(f'{VAASTAV}/{season}/players_raw.csv', usecols=cols) for season in web_name_seasons],
+    ignore_index=True
+)
 web_names['full_name'] = web_names['first_name'] + " " + web_names['second_name']
 web_names['full_name'] = web_names['full_name'].str.replace("-", " ")
 
@@ -372,12 +354,6 @@ positions_df.to_csv("seed_data/positions.csv", index=False)
 fixtures_df.to_csv("seed_data/fixtures.csv", index=False)
 fixtures_stat_table.to_csv("seed_data/fixtures_stats.csv", index=False)
 fpl20_24.to_csv("seed_data/fpl20_24.csv", index= False)
-
-# %% [markdown]
-#
-
-# %% [markdown]
-#
 
 # %% [markdown]
 # ### Structure for Fantasy Premier League data model
